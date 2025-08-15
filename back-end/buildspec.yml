@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - cd back-end
+      - npm ci
+  build:
+    commands:
+      - cd back-end
+      - npm run build
+
+artifacts:
+  # Publish ONLY the backend as the deployable artifact root
+  base-directory: back-end
+  files:
+    - package.json
+    - package-lock.json
+    - dist/**/*
+    - Procfile
