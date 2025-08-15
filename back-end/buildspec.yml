@@ -5,15 +5,16 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - cd back-end
-      - npm ci
+      - npm ci --prefix back-end
   build:
     commands:
-      - cd back-end
-      - npm run build
+      - npm run build --prefix back-end
+
+cache:
+  paths:
+    - ~/.npm/**/*
 
 artifacts:
-  # Publish ONLY the backend as the deployable artifact root
   base-directory: back-end
   files:
     - package.json
