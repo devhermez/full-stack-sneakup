@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pillow
+torch
+transformers
+faiss-cpu
+python-multipart
+requests
+pymongo
+numpy
