@@ -1,28 +1,50 @@
-# Node
+# -----------------------
+# Node.js
+# -----------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# Env
+# -----------------------
+# Environment variables
+# -----------------------
 .env
 .env.*
 **/.env
 **/.env.*
+
+# Explicit env files in apps
 back-end/.env
 front-end/.env
 
+# -----------------------
 # Logs
-logs
+# -----------------------
+logs/
 *.log
 log/
 
+# -----------------------
 # OS / IDE
+# -----------------------
 .DS_Store
 .vscode/
 .idea/
 
-# Build
-back-end/dist
-front-end/build
-front-end/.next
+# -----------------------
+# Build outputs
+# -----------------------
+# Backend
+back-end/dist/
+
+# Frontend
+front-end/build/
+front-end/.next/
+
+# -----------------------
+# Misc
+# -----------------------
+coverage/
+*.tsbuildinfo

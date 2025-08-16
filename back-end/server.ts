@@ -3,7 +3,6 @@ import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import cors, { CorsOptions } from "cors";
 import dotenv from "dotenv";
-import morgan from "morgan";
 import bodyParser from "body-parser";
 
 import { apiLimiter } from "./middleware/rateLimitMiddleware";
@@ -24,7 +23,10 @@ const allowedOrigins = [
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
     // allow requests with no origin (like mobile apps, curl)
-    if (!origin || allowedOrigins.includes(origin as (typeof allowedOrigins)[number])) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin as (typeof allowedOrigins)[number])
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
@@ -47,6 +49,7 @@ app.use(express.json());
 
 // Use morgan only in development
 if (process.env.NODE_ENV === "development") {
+  const morgan = require("morgan") as typeof import("morgan");
   app.use(morgan("dev"));
 }
 
