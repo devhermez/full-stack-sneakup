@@ -1,17 +1,37 @@
-import { useEffect, useState, useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+
 import { AuthContext } from "../context/AuthContext";
-import api from "../api.js";
-import AdminNav from "./AdminNav.jsx";
-import AdminFooter from "./AdminFooter.jsx";
+import api from "../api";
+
+import AdminNav from "./AdminNav";
+import AdminFooter from "./AdminFooter";
+
+import type { Product } from "../types/Product";
+import type { User } from "../types/User";
+
+type RouteParams = { id: string };
+type NumberOrEmpty = number | "";
+
+type FormState = {
+  name: string;
+  brand: string;
+  category: string;
+  gender: string;
+  price: NumberOrEmpty;
+  stock: NumberOrEmpty;
+  description: string;
+  images: string[];
+  sizes: string[];
+};
 
 const ProductsEditScreen = () => {
-  const { id } = useParams();
+  const { id } = useParams<RouteParams>();
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext) as { user: User | null };
 
-  const [product, setProduct] = useState(null);
-  const [form, setForm] = useState({
+  const [product, setProduct] = useState<Product | null>(null);
+  const [form, setForm] = useState<FormState>({
     name: "",
     brand: "",
     category: "",
@@ -25,17 +45,28 @@ const ProductsEditScreen = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch product
   useEffect(() => {
     const controller = new AbortController();
+
     const fetchProduct = async () => {
       try {
-        const { data } = await api.get(`/api/products/${id}`, {
+        if (!id) {
+          setError("Missing product id.");
+          return;
+        }
+        if (!user?.token) {
+          setError("You must be logged in to edit products.");
+          return;
+        }
+
+        const { data } = await api.get<Product>(`/api/products/${id}`, {
           headers: { Authorization: `Bearer ${user.token}` },
           signal: controller.signal,
         });
+
         setProduct(data);
         setForm({
           name: data.name ?? "",
@@ -57,15 +88,27 @@ const ProductsEditScreen = () => {
         if (!controller.signal.aborted) setLoading(false);
       }
     };
+
     fetchProduct();
     return () => controller.abort();
-  }, [id, user.token]);
+  }, [id, user?.token]);
 
-  const onChange = (e) => {
+  const onChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
+
     if (name === "price" || name === "stock") {
-      setForm((f) => ({ ...f, [name]: value === "" ? "" : Number(value) }));
-    } else if (name === "imagesCsv") {
+      setForm((f) => ({
+        ...f,
+        [name]: value === "" ? "" : Number(value),
+      }));
+      return;
+    }
+
+    if (name === "imagesCsv") {
       setForm((f) => ({
         ...f,
         images: value
@@ -73,7 +116,10 @@ const ProductsEditScreen = () => {
           .map((s) => s.trim())
           .filter(Boolean),
       }));
-    } else if (name === "sizesCsv") {
+      return;
+    }
+
+    if (name === "sizesCsv") {
       setForm((f) => ({
         ...f,
         sizes: value
@@ -81,12 +127,13 @@ const ProductsEditScreen = () => {
           .map((s) => s.trim())
           .filter(Boolean),
       }));
-    } else {
-      setForm((f) => ({ ...f, [name]: value }));
+      return;
     }
+
+    setForm((f) => ({ ...f, [name]: value }));
   };
 
-  const onSubmit = async (e) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
@@ -95,10 +142,17 @@ const ProductsEditScreen = () => {
     if (!form.brand.trim()) return setError("Brand is required.");
     if (!form.category.trim()) return setError("Category is required.");
     if (!form.gender.trim()) return setError("Gender is required.");
-    if (Number.isNaN(form.price) || form.price < 0)
+    if (form.price === "" || Number.isNaN(form.price) || Number(form.price) < 0)
       return setError("Price must be a non-negative number.");
-    if (!Number.isInteger(form.stock) || form.stock < 0)
+    if (
+      form.stock === "" ||
+      !Number.isInteger(Number(form.stock)) ||
+      Number(form.stock) < 0
+    )
       return setError("Stock must be a non-negative integer.");
+
+    if (!id) return setError("Missing product id.");
+    if (!user?.token) return setError("You must be logged in.");
 
     setSaving(true);
     try {
@@ -109,18 +163,20 @@ const ProductsEditScreen = () => {
           brand: form.brand,
           category: form.category,
           gender: form.gender,
-          price: form.price,
-          stock: form.stock,
+          price: Number(form.price),
+          stock: Number(form.stock),
           description: form.description,
           images: form.images,
           sizes: form.sizes,
         },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
-      navigate("/admin/products"); // go back to list
-    } catch (err) {
+      navigate("/admin/products");
+    } catch (err: unknown) {
       console.error("Update failed:", err);
-      setError(err.response?.data?.message || "Failed to update product.");
+      // If you use Axios, you can refine this:
+      // const message = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+      setError("Failed to update product.");
     } finally {
       setSaving(false);
     }
@@ -134,10 +190,7 @@ const ProductsEditScreen = () => {
   return (
     <div className="admin-product-container">
       <AdminNav />
-      <div
-        className="admin-product-content"
-        
-      >
+      <div className="admin-product-content">
         <h1 className="admin-edit-title">SneakUp Admin</h1>
         <h3 className="admin-edit-sub-title">Product Information</h3>
 
@@ -149,7 +202,7 @@ const ProductsEditScreen = () => {
 
         <form onSubmit={onSubmit}>
           <label>
-            Name: 
+            Name:
             <input
               name="name"
               type="text"
@@ -164,7 +217,7 @@ const ProductsEditScreen = () => {
           <label>
             Brand:
             <input
-            className="form-product-input"
+              className="form-product-input"
               name="brand"
               type="text"
               value={form.brand}
@@ -177,7 +230,7 @@ const ProductsEditScreen = () => {
           <label>
             Category:
             <input
-            className="form-product-input"
+              className="form-product-input"
               name="category"
               type="text"
               value={form.category}
@@ -190,7 +243,7 @@ const ProductsEditScreen = () => {
           <label>
             Gender:
             <select
-            className="form-product-input"
+              className="form-product-input"
               name="gender"
               value={form.gender}
               onChange={onChange}
@@ -207,7 +260,7 @@ const ProductsEditScreen = () => {
           <label>
             Price:
             <input
-            className="form-product-input"
+              className="form-product-input"
               name="price"
               type="number"
               step="0.01"
@@ -221,7 +274,7 @@ const ProductsEditScreen = () => {
           <label>
             Stock:
             <input
-            className="form-product-input"
+              className="form-product-input"
               name="stock"
               type="number"
               step="1"
@@ -235,7 +288,7 @@ const ProductsEditScreen = () => {
           <label>
             Description:
             <textarea
-            className="form-product-input"
+              className="form-product-input"
               name="description"
               rows={4}
               value={form.description}
@@ -247,7 +300,7 @@ const ProductsEditScreen = () => {
           <label>
             Images (comma-separated URLs):
             <input
-            className="form-product-input"
+              className="form-product-input"
               name="imagesCsv"
               type="text"
               value={form.images.join(", ")}
@@ -259,7 +312,7 @@ const ProductsEditScreen = () => {
           <label>
             Sizes (comma-separated):
             <input
-            className="form-product-input"
+              className="form-product-input"
               name="sizesCsv"
               type="text"
               value={form.sizes.join(", ")}
@@ -268,7 +321,15 @@ const ProductsEditScreen = () => {
             />
           </label>
 
-          <div className="admin-product-edit-buttons"style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "space-between" }}>
+          <div
+            className="admin-product-edit-buttons"
+            style={{
+              display: "flex",
+              gap: 8,
+              marginTop: 12,
+              justifyContent: "space-between",
+            }}
+          >
             <button type="submit" disabled={saving}>
               {saving ? "Saving…" : "Save"}
             </button>

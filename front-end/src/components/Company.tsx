@@ -1,12 +1,5 @@
-import React from "react";
-import {
-  FaInstagram,
-  FaFacebook,
-  FaYoutube,
-  FaLinkedin,
-  FaTwitter,
-} from "react-icons/fa";
-import { FaTiktok, FaXTwitter } from "react-icons/fa6";
+import { FaInstagram, FaFacebook } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 const Company = () => {
   return (
@@ -64,8 +57,6 @@ const Company = () => {
           >
             <FaFacebook />
           </a>
-         
-          
         </div>
       </div>
     </div>

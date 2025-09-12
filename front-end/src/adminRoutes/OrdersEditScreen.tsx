@@ -1,35 +1,57 @@
-import { AuthContext } from "../context/AuthContext";
 import { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
-import api from "../api.js";
-import AdminFooter from "./AdminFooter.jsx";
-import AdminNav from "./AdminNav.jsx";
+
+import { AuthContext } from "../context/AuthContext";
+import api from "../api.ts"; 
+
+import AdminFooter from "./AdminFooter.tsx";
+import AdminNav from "./AdminNav.tsx";
+
+import type { Order } from "../types/Order";
+import type { User } from "../types/User";
+
+type RouteParams = {
+  id: string;
+};
 
 const OrdersEditScreen = () => {
-  const { id } = useParams();
-  const { user } = useContext(AuthContext);
-  const [order, setOrder] = useState(null);
+  const { id } = useParams<RouteParams>();
+  const { user } = useContext(AuthContext) as { user: User | null };
+
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!id) {
+      setError("Missing order id in the route.");
+      setLoading(false);
+      return;
+    }
+    if (!user?.token) {
+      setError("You must be logged in to view this order.");
+      setLoading(false);
+      return;
+    }
+
     const fetchOrder = async () => {
       try {
-        const { data } = await api.get(`/api/orders/${id}`, {
+        const { data } = await api.get<Order>(`/api/orders/${id}`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },
         });
         setOrder(data);
       } catch (err) {
-        setError("Error fetching order");
         console.error(err);
+        setError("Error fetching order");
       } finally {
         setLoading(false);
       }
     };
+
     fetchOrder();
-  }, [id, user.token]);
+  }, [id, user?.token]);
 
   if (loading) return <div>Loading order...</div>;
   if (error) return <div>{error}</div>;
@@ -60,11 +82,11 @@ const OrdersEditScreen = () => {
 
           <section className="order-section">
             <h3>Payment</h3>
-            <p>Method: {order.paymentResult?.method || "N/A"}</p>
+            <p>Method: {order.paymentResult?.method ?? "N/A"}</p>
             <p>
               Status:{" "}
               {order.isPaid
-                ? `Paid on ${new Date(order.paidAt).toLocaleDateString()}`
+                ? `Paid on ${new Date(order.paidAt!).toLocaleDateString()}`
                 : "Not Paid"}
             </p>
           </section>
@@ -74,9 +96,7 @@ const OrdersEditScreen = () => {
             <p>
               Status:{" "}
               {order.isDelivered
-                ? `Delivered on ${new Date(
-                    order.deliveredAt
-                  ).toLocaleDateString()}`
+                ? `Delivered on ${new Date(order.deliveredAt!).toLocaleDateString()}`
                 : "Not Delivered"}
             </p>
           </section>
@@ -86,7 +106,8 @@ const OrdersEditScreen = () => {
             <ul>
               {order.orderItems.map((item, index) => (
                 <li key={index}>
-                  {item.name} × {item.quantity} – ${item.price.toFixed(2)} each
+                  {item.name} × {item.quantity} – $
+                  {Number(item.price).toFixed(2)} each
                 </li>
               ))}
             </ul>
@@ -94,7 +115,7 @@ const OrdersEditScreen = () => {
 
           <section className="order-section">
             <h3>Total</h3>
-            <p>${order.totalPrice.toFixed(2)}</p>
+            <p>${Number(order.totalPrice).toFixed(2)}</p>
           </section>
         </div>
       </div>

@@ -1,17 +1,22 @@
-import React from "react";
-import Nav from "./Nav.jsx";
-import api from "./api.js";
-import { useCart } from "./context/CartContext.jsx";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Company from './Company.jsx';
-import Footer from './Footer.jsx';
+import Nav from "../components/Nav";
+import api from "../api";
+import Company from "../components/Company";
+import Footer from "../components/Footer";
+import { useCart } from "../context/CartContext";
+import { useState, type ChangeEvent } from "react";
+
+type ShippingAddress = {
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+};
+
+type StoredUser = { token: string } | null;
 
 const Checkout = () => {
-  const { cartItems, clearCart } = useCart();
-  const navigate = useNavigate();
-
-  const [shipping, setShipping] = useState({
+  const { cartItems } = useCart();
+  const [shipping, setShipping] = useState<ShippingAddress>({
     address: "",
     city: "",
     postalCode: "",
@@ -21,75 +26,73 @@ const Checkout = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setShipping({ ...shipping, [e.target.name]: e.target.value });
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setShipping((prev) => ({ ...prev, [name]: value }));
   };
 
   const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + Number(item.price) * Number(item.quantity),
     0
   );
 
-  const handlePlaceOrder = async (e) => {
-    const userInfo = JSON.parse(localStorage.getItem("user"));
+  const handlePlaceOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // ADD THIS DEBUG CODE:
-    console.log("Cart items:", cartItems);
-    console.log("First item _id:", cartItems[0]?._id);
-    console.log(
-      "Mapped order items:",
-      cartItems.map((item) => ({
-        product: item._id,
-        name: item.name,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity,
-        size: item.size,
-      }))
-    );
+    const userInfo: StoredUser = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("user") || "null");
+      } catch {
+        return null;
+      }
+    })();
+
+    if (!userInfo?.token) {
+      setLoading(false);
+      setError("You must be logged in to place an order.");
+      return;
+    }
 
     try {
-      const res = await api.post(
+      // Create order (note: image + size pulled from cart item shape)
+      const createRes = await api.post(
         "/api/orders",
         {
           orderItems: cartItems.map((item) => ({
-            product: item._id,
+            product: item._id, // backend expects product id
             name: item.name,
-            image: item.image,
-            price: item.price,
-            quantity: item.quantity,
-            size: item.size,
+            image: item.images?.[0] ?? "",
+            price: Number(item.price),
+            quantity: Number(item.quantity),
+            size: item.selectedSize, // <-- important
           })),
           shippingAddress: shipping,
           itemsPrice: totalPrice,
           totalPrice,
         },
         {
-          headers: {
-            Authorization: `Bearer ${userInfo.token}`,
-          },
+          headers: { Authorization: `Bearer ${userInfo.token}` },
         }
       );
 
-      const orderId = res.data._id;
+      const orderId: string = createRes.data._id;
 
+      // Create Stripe session
       const sessionRes = await api.post(
         `/api/orders/${orderId}/create-checkout-session`,
         {},
         {
-          headers: {
-            Authorization: `Bearer ${userInfo.token}`,
-          },
+          headers: { Authorization: `Bearer ${userInfo.token}` },
         }
       );
 
-      window.location.href = sessionRes.data.url;
-    } catch (err) {
+      // Redirect to Stripe
+      window.location.href = sessionRes.data.url as string;
+    } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.message || "Something went wrong.");
+      setError(err?.response?.data?.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -101,10 +104,10 @@ const Checkout = () => {
       <div className="checkout-content">
         <div className="checkout-left">
           <h2 className="checkout-title">SHIPPING INFORMATION</h2>
-          
+
           <form onSubmit={handlePlaceOrder} className="checkout-form">
             <h3 className="form-title">Enter your shipping details below.</h3>
-            
+
             <input
               className="form-address"
               name="address"
@@ -113,7 +116,7 @@ const Checkout = () => {
               value={shipping.address}
               placeholder="Address"
               required
-            ></input>
+            />
             <input
               className="form-city"
               name="city"
@@ -122,7 +125,7 @@ const Checkout = () => {
               value={shipping.city}
               placeholder="City"
               required
-            ></input>
+            />
             <input
               className="form-postal-code"
               name="postalCode"
@@ -131,7 +134,7 @@ const Checkout = () => {
               value={shipping.postalCode}
               placeholder="Postal Code"
               required
-            ></input>
+            />
             <input
               className="form-country"
               name="country"
@@ -140,7 +143,14 @@ const Checkout = () => {
               value={shipping.country}
               placeholder="Country"
               required
-            ></input>
+            />
+
+            {error && (
+              <div className="error-message" style={{ marginTop: 8 }}>
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
               className="button-checkout"
@@ -150,17 +160,28 @@ const Checkout = () => {
             </button>
           </form>
         </div>
+
         <div className="checkout-right">
           <h3 className="summary-title">Order Summary</h3>
-          {cartItems.map((item) => {
-            return (
-              <div key={item._id} className="item-checkout-card">
-                <img src={item.image} alt="" className="item-checkout-img" />
-                <h4 className="item-checkout-name">{item.name}</h4>
-                <p className="item-checkout-price">${item.price.toFixed(2)}</p>
-              </div>
-            );
-          })}
+          {cartItems.map((item) => (
+            <div
+              key={`${item._id}-${item.selectedSize ?? "nosize"}`}
+              className="item-checkout-card"
+            >
+              <img
+                src={item.images?.[0] ?? ""}
+                alt={item.name}
+                className="item-checkout-img"
+              />
+              <h4 className="item-checkout-name">{item.name}</h4>
+              {item.selectedSize && (
+                <p className="item-checkout-size">Size: {item.selectedSize}</p>
+              )}
+              <p className="item-checkout-price">
+                ${Number(item.price).toFixed(2)}
+              </p>
+            </div>
+          ))}
           <p className="item-checkout-total">
             <strong>Total: ${totalPrice.toFixed(2)}</strong>
           </p>

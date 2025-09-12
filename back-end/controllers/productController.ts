@@ -57,7 +57,6 @@ export const createProduct = async (req: Request, res: Response) => {
       stock: 0,
       sizes: ["US 8"],
       gender: "Unisex",
-      user: req.user._id,
     });
 
     const createdProduct = await product.save();

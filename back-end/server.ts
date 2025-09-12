@@ -1,9 +1,10 @@
 // server.ts
 import express, { Request, Response } from "express";
 import mongoose from "mongoose";
-import cors, { CorsOptions } from "cors";
+import cors from "cors";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
+import helmet from "helmet";
 
 import { apiLimiter } from "./middleware/rateLimitMiddleware";
 import productRoutes from "./routes/productRoutes";
@@ -14,66 +15,53 @@ import { handleStripeWebhook } from "./controllers/orderController";
 dotenv.config();
 
 const app = express();
+app.set("trust proxy", 1);
 
+// ----- Security headers -----
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+
+// ----- CORS (env-driven) -----
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://full-stack-sneak-up.vercel.app",
-] as const;
+  process.env.CLIENT_URL!,         // e.g., https://sneakup.vercel.app
+  process.env.CLIENT_URL_ALT || "", // optional www/apex
+].filter(Boolean);
 
-const corsOptions: CorsOptions = {
-  origin: (origin, callback) => {
-    // allow requests with no origin (like mobile apps, curl)
-    if (
-      !origin ||
-      allowedOrigins.includes(origin as (typeof allowedOrigins)[number])
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
-
-// Stripe webhook must receive the raw body BEFORE express.json()
-app.post(
-  "/api/webhook",
-  bodyParser.raw({ type: "application/json" }),
-  handleStripeWebhook // ensure this is typed as express.RequestHandler in your controller
+app.use(
+  cors({
+    origin: (origin, cb) =>
+      !origin || allowedOrigins.includes(origin) ? cb(null, true) : cb(new Error("Not allowed by CORS")),
+    credentials: true,
+  })
 );
 
-// JSON parser for the rest of the routes
+// ----- Stripe webhook must get raw body BEFORE express.json() -----
+app.post("/api/webhook", bodyParser.raw({ type: "application/json" }), handleStripeWebhook);
+
+// JSON parser for the rest
 app.use(express.json());
 
-// Use morgan only in development
+// Dev logging
 if (process.env.NODE_ENV === "development") {
   const morgan = require("morgan") as typeof import("morgan");
   app.use(morgan("dev"));
 }
 
-// Global rate limiting for all /api endpoints
+// Rate limit for /api
 app.use("/api", apiLimiter);
 
 // Routes
 app.use("/api/products", productRoutes);
-console.log("Mounted: /api/products");
 app.use("/api/users", userRoutes);
-console.log("Mounted: /api/users");
 app.use("/api/orders", orderRoutes);
-console.log("Mounted: /api/orders");
 
-// Health check
-app.get("/", (_req: Request, res: Response) => {
-  res.send("Sneak Up API is running");
-});
+// Health checks
+app.get("/", (_req: Request, res: Response) => res.send("Sneak Up API is running"));
+app.get("/healthz", (_req, res) => res.status(200).json({ ok: true }));
 
 // Mongo connection
 const MONGO_URI = process.env.MONGO_URI;
-if (!MONGO_URI) {
-  throw new Error("MONGO_URI is not set in environment variables");
-}
+if (!MONGO_URI) throw new Error("MONGO_URI is not set");
 
 mongoose
   .connect(MONGO_URI)
@@ -84,7 +72,17 @@ mongoose
   });
 
 const PORT = Number(process.env.PORT) || 5001;
-app.listen(PORT, () => console.log(`Server is listening on ${PORT}`));
+const server = app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+
+// ----- Graceful shutdown -----
+const shutdown = async (signal: string) => {
+  console.log(`${signal} received, shutting down...`);
+  server.close(() => console.log("HTTP server closed"));
+  await mongoose.connection.close();
+  process.exit(0);
+};
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 // (optional) export for testing
 export default app;

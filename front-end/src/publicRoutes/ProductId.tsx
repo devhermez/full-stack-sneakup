@@ -1,24 +1,33 @@
-import Nav from "./Nav.jsx";
-import api from "./api.js";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useCart } from "./context/CartContext.jsx";
+import { useCart } from "../context/CartContext";
+import Company from "../components/Company";
+import Footer from "../components/Footer";
+
+import Nav from "../components/Nav";
+import api from "../api";
+
+import type { Product } from "../types/Product";
+
+type RouteParams = { id: string };
 
 const ProductId = () => {
   const { addToCart } = useCart();
-  const { id } = useParams();
-  const [product, setProduct] = useState(null);
+  const { id } = useParams<RouteParams>();
+
+  const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSize, setSelectedSize] = useState();
+  const [selectedSize, setSelectedSize] = useState<string>("");
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await api.get(`/api/products/${id}`);
+        if (!id) return;
+        const res = await api.get<Product>(`/api/products/${id}`);
         setProduct(res.data);
-        setLoading(false);
       } catch (err) {
-        console.log("Error fetching product", err);
+        console.error("Error fetching product", err);
+      } finally {
         setLoading(false);
       }
     };
@@ -27,7 +36,7 @@ const ProductId = () => {
   }, [id]);
 
   useEffect(() => {
-    if (product) {
+    if (product?.name) {
       document.title = `${product.name} | SneakUp`;
     }
   }, [product]);
@@ -37,16 +46,11 @@ const ProductId = () => {
       alert("Please select a size");
       return;
     }
+    if (!product) return;
 
-    addToCart({
-      _id: product._id,
-      product: product._id,
-      name: product.name,
-      image: product.images[0], // Main image
-      price: product.price,
-      quantity: 1,
-      size: selectedSize,
-    });
+    // NOTE: Your CartContext currently accepts only Product.
+    // If you want to persist the *chosen* size, extend CartContext/CartItem to include it.
+    addToCart(product, { selectedSize });
   };
 
   if (loading) return <p>Loading...</p>;
@@ -58,15 +62,14 @@ const ProductId = () => {
       <div className="product-details-content">
         <div className="products-details-card">
           <div className="product-details-images">
-            {product.images.map((img, index) => {
-              return (
-                <img
-                  key={index}
-                  src={img}
-                  className={`${product.name}-${index} product-imgs`}
-                />
-              );
-            })}
+            {product.images?.map((img, index) => (
+              <img
+                key={index}
+                src={img}
+                alt={`${product.name} - ${index + 1}`}
+                className={`${product.name}-${index} product-imgs`}
+              />
+            ))}
           </div>
 
           <div className="product-details-info">
@@ -79,19 +82,20 @@ const ProductId = () => {
               <strong>Category:</strong> {product.category}
             </p>
             <p>
-              <strong>Gender:</strong> {product.gender}
+              <strong>Gender:</strong> {String(product.gender)}
             </p>
             <p>
-              <strong>Price:</strong> ${product.price}
+              <strong>Price:</strong> ${Number(product.price ?? 0).toFixed(2)}
             </p>
             <p>
               <strong>Available Sizes:</strong>
-              <select className="select-button"
+              <select
+                className="select-button"
                 value={selectedSize}
                 onChange={(e) => setSelectedSize(e.target.value)}
               >
                 <option value="">Select Size</option>
-                {product.sizes.map((size) => (
+                {(product.sizes ?? []).map((size) => (
                   <option key={size} value={size}>
                     {size}
                   </option>
@@ -107,7 +111,10 @@ const ProductId = () => {
             </button>
           </div>
         </div>
+        
       </div>
+      <Company />
+        <Footer />
     </div>
   );
 };

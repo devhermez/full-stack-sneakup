@@ -3,24 +3,37 @@ import {
   useContext,
   useState,
   useEffect,
-  Children,
   useRef,
+  type ReactNode,
 } from "react";
 import { FaCircleCheck } from "react-icons/fa6";
+import type { Product } from "../types/Product";
 
-export const CartContext = createContext();
+export interface CartItem extends Product {
+  _id: string;
+  product: string;         // product id ref
+  quantity: number;
+  selectedSize?: string;   // NEW: chosen variant
+}
 
-export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+interface CartContextType {
+  cartItems: CartItem[];
+  addToCart: (product: Product, opts?: { selectedSize?: string }) => void; // changed
+  removeFromCart: (id: string, selectedSize?: string) => void;             // changed
+  clearCart: () => void;
+}
+
+export const CartContext = createContext<CartContextType | undefined>(undefined);
+
+export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
-  const hideTimer = useRef(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const storedCart = localStorage.getItem("cartItems");
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
-    }
+    const stored = localStorage.getItem("cartItems");
+    if (stored) setCartItems(JSON.parse(stored));
   }, []);
 
   useEffect(() => {
@@ -34,36 +47,45 @@ export const CartProvider = ({ children }) => {
     hideTimer.current = setTimeout(() => setShowPopup(false), ms);
   };
 
-  const addToCart = (product) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item._id === product._id);
-      if (existingItem) {
-        return prevItems.map((item) =>
-          item._id === product._id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+  const addToCart: CartContextType["addToCart"] = (product, opts) => {
+    const size = opts?.selectedSize; // may be undefined
+    setCartItems(prev => {
+      // find line with SAME product + SAME selected size
+      const existing = prev.find(
+        i => i._id === product._id && i.selectedSize === size
+      );
+      if (existing) {
+        return prev.map(i =>
+          i._id === product._id && i.selectedSize === size
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
         );
-      } else {
-        return [
-          ...prevItems,
-          { ...product, _id: product._id, product: product._id, quantity: 1 },
-        ];
       }
+      // add a new line
+      return [
+        ...prev,
+        {
+          ...product,
+          _id: product._id,
+          product: product._id,
+          quantity: 1,
+          selectedSize: size,
+        },
+      ];
     });
-
-    flashPopup(`Added ${product.name || "item"} to cart successfully`);
+    flashPopup(`Added ${product.name}${opts?.selectedSize ? ` (Size ${opts.selectedSize})` : ""}`);
   };
 
-  const removeFromCart = (id) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item._id !== id));
+  const removeFromCart: CartContextType["removeFromCart"] = (id, selectedSize) => {
+    setCartItems(prev =>
+      prev.filter(i => !(i._id === id && i.selectedSize === selectedSize))
+    );
   };
 
   const clearCart = () => setCartItems([]);
 
   return (
-    <CartContext.Provider
-      value={{ cartItems, addToCart, removeFromCart, clearCart }}
-    >
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart }}>
       {children}
       {showPopup && (
         <div
@@ -73,13 +95,13 @@ export const CartProvider = ({ children }) => {
           style={{
             position: "fixed",
             left: "50%",
-            bottom: "24px",
+            bottom: 24,
             transform: "translateX(-50%)",
             background: "rgba(0,0,0,0.85)",
             color: "#fff",
             padding: "10px 14px",
-            borderRadius: "10px",
-            fontSize: "14px",
+            borderRadius: 10,
+            fontSize: 14,
             zIndex: 2000,
             boxShadow: "0 6px 16px rgba(0,0,0,0.2)",
             whiteSpace: "nowrap",
@@ -89,15 +111,19 @@ export const CartProvider = ({ children }) => {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            gap: "5px",
+            gap: 6,
           }}
         >
           {popupMsg}
-          <FaCircleCheck size={18} color="#ffffffff" aria-hidden="true" />
+          <FaCircleCheck size={18} color="#fff" aria-hidden="true" />
         </div>
       )}
     </CartContext.Provider>
   );
 };
 
-export const useCart = () => useContext(CartContext);
+export const useCart = () => {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be used inside CartProvider");
+  return ctx;
+};

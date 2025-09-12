@@ -1,4 +1,4 @@
-import React from "react";
+
 import { FaLinkedin, FaGithub } from "react-icons/fa";
 import { FiGlobe } from "react-icons/fi";
 
@@ -13,7 +13,7 @@ const Footer = () => {
         <FaGithub  />
       </a>
       <a href="https://hermez.dev/">
-        <FiGlobe s/>
+        <FiGlobe />
       </a>
     </div>
   );

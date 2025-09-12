@@ -23,11 +23,12 @@ export interface PaymentResult {
   status: string;
   update_time: string;
   email_address: string;
+  method?: string;
 }
 
 export interface Order {
   _id: string;
-  user: string | User;
+  user: User;
   orderItems: OrderItem[];
   shippingAddress: ShippingAddress;
   itemsPrice: number;

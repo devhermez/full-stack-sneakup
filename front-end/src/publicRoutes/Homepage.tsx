@@ -1,22 +1,26 @@
-import React, { useEffect, useState } from "react";
-import Nav from "./Nav.jsx";
-import Company from "./Company.jsx";
-import Footer from "./Footer.jsx";
-import "./App.scss";
-import api from "./api.js";
-import featured from "./assets/featured-promotional-nike-jordanmid1.mp4";
+// src/pages/Homepage.tsx
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import Nav from "../components/Nav";
+import Company from "../components/Company";
+import Footer from "../components/Footer";
+import "../App.scss";
+
+import api from "../api";
+import featured from "../assets/featured-promotional-nike-jordanmid1.mp4";
+import type { Product } from "../types/Product";
+
 const Homepage = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await api.get("/api/products");
+        const res = await api.get<Product[]>("/api/products");
         setProducts(res.data);
       } catch (err) {
-        console.log("Error fetching products", err);
+        console.error("Error fetching products", err);
       }
     };
 
@@ -38,6 +42,7 @@ const Homepage = () => {
   return (
     <div className="homepage-container">
       <Nav />
+
       <div className="featured-container">
         <video className="featured-video" autoPlay muted loop>
           <source src={featured} type="video/mp4" />
@@ -48,113 +53,108 @@ const Homepage = () => {
           <h3 className="featured-description">
             Classic silhouette with modern colorways
           </h3>
-          
         </div>
       </div>
-      
-      
+
+      {/* Basketball */}
       <div className="basketball-container">
         <div className="content-title-container">
           <h1 className="content-title">BASKETBALL</h1>
         </div>
         <div className="contents">
-          {basketballShoes.map((shoe, index) => {
-            return (
-              <Link className="shoe-id-link" to={`/products/${shoe._id}`}>
-                <div
-                  key={shoe._id}
-                  className={`basketball-content-${index + 1}`}
-                >
-                  <div className="content-upper">
-                    <img
-                      className="product-images-temp1"
-                      src={shoe.images[0]}
-                      alt={shoe.name}
-                    />
-                  </div>
-                  <div className="content-lower">
-                    <h3 className={`basketball-${index + 1}-name`}>
-                      {shoe.name}
-                    </h3>
-                    <p className={`basketball-${index + 1}-description`}>
-                      {shoe.description}
-                    </p>
-                    <p className={`basketball-${index + 1}-price`}>
-                      ${shoe.price}
-                    </p>
-                  </div>
+          {basketballShoes.map((shoe, index) => (
+            <Link key={shoe._id} className="shoe-id-link" to={`/products/${shoe._id}`}>
+              <div className={`basketball-content-${index + 1}`}>
+                <div className="content-upper">
+                  <img
+                    className="product-images-temp1"
+                    src={shoe.images?.[0]}
+                    alt={shoe.name}
+                  />
                 </div>
-              </Link>
-            );
-          })}
+                <div className="content-lower">
+                  <h3 className={`basketball-${index + 1}-name`}>{shoe.name}</h3>
+                  <p className={`basketball-${index + 1}-description`}>
+                    {shoe.description}
+                  </p>
+                  <p className={`basketball-${index + 1}-price`}>
+                    ${Number(shoe.price ?? 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
 
         <button className="button-shop-now">Shop Basketball →</button>
       </div>
+
+      {/* Running */}
       <div className="running-container">
         <div className="content-title-container">
           <h1 className="content-title">RUNNING</h1>
         </div>
         <div className="contents">
-          {runningShoes.map((shoe, index) => {
-            return (
-              <Link className="shoe-id-link" to={`/products/${shoe._id}`}>
-                <div key={shoe._id} className={`running-content-${index + 1}`}>
-                  <div className="content-upper">
-                    <img
-                      className="product-images-temp1"
-                      src={shoe.images[0]}
-                      alt={shoe.name}
-                    />
-                  </div>
-                  <div className="content-lower">
-                    <h3 className={`running-${index + 1}-name`}>{shoe.name}</h3>
-                    <p className={`running-${index + 1}-description`}>
-                      {shoe.description}
-                    </p>
-                    <p className={`running-${index + 1}-price`}>
-                      ${shoe.price}
-                    </p>
-                  </div>
+          {runningShoes.map((shoe, index) => (
+            <Link key={shoe._id} className="shoe-id-link" to={`/products/${shoe._id}`}>
+              <div className={`running-content-${index + 1}`}>
+                <div className="content-upper">
+                  <img
+                    className="product-images-temp1"
+                    src={shoe.images?.[0]}
+                    alt={shoe.name}
+                  />
                 </div>
-              </Link>
-            );
-          })}
+                <div className="content-lower">
+                  <h3 className={`running-${index + 1}-name`}>{shoe.name}</h3>
+                  <p className={`running-${index + 1}-description`}>
+                    {shoe.description}
+                  </p>
+                  <p className={`running-${index + 1}-price`}>
+                    ${Number(shoe.price ?? 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
 
         <button className="button-shop-now">Shop Running →</button>
       </div>
+
+      {/* Casual */}
       <div className="casual-container">
         <div className="content-title-container">
           <h1 className="content-title">CASUAL</h1>
         </div>
         <div className="contents">
-          {casualShoes.map((shoe, index) => {
-            return (
-              <Link className="shoe-id-link" to={`/products/${shoe._id}`}>
-                <div key={shoe._id} className={`casual-content-${index + 1}`}>
-                  <div className="content-upper">
-                    <img
-                      className="product-images-temp1"
-                      src={shoe.images[0]}
-                      alt={shoe.name}
-                    />
-                  </div>
-                  <div className="content-lower">
-                    <h3 className={`casual-${index + 1}-name`}>{shoe.name}</h3>
-                    <p className={`casual-${index + 1}-description`}>
-                      {shoe.description}
-                    </p>
-                    <p className={`casual-${index + 1}-price`}>${shoe.price}</p>
-                  </div>
+          {casualShoes.map((shoe, index) => (
+            <Link key={shoe._id} className="shoe-id-link" to={`/products/${shoe._id}`}>
+              <div className={`casual-content-${index + 1}`}>
+                <div className="content-upper">
+                  <img
+                    className="product-images-temp1"
+                    src={shoe.images?.[0]}
+                    alt={shoe.name}
+                  />
                 </div>
-              </Link>
-            );
-          })}
+                <div className="content-lower">
+                  <h3 className={`casual-${index + 1}-name`}>{shoe.name}</h3>
+                  <p className={`casual-${index + 1}-description`}>
+                    {shoe.description}
+                  </p>
+                  <p className={`casual-${index + 1}-price`}>
+                    ${Number(shoe.price ?? 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
 
         <button className="button-shop-now">Shop Casual →</button>
       </div>
+
       <Company />
       <Footer />
     </div>

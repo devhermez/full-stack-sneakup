@@ -1,19 +1,20 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import Nav from "../Nav.jsx";
-import api from "../api.js";
-import Company from "../Company.jsx";
-import Footer from "../Footer.jsx";
+import Nav from "../components/Nav";
+import api from "../api";
+import Company from "../components/Company";
+import Footer from "../components/Footer";
+import type { Product } from "../types/Product";
 
 const Women = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await api.get("/api/products");
+        const { data } = await api.get<Product[]>("/api/products");
         setProducts(data);
       } catch (err) {
         setError("Failed to load products.");
@@ -25,7 +26,7 @@ const Women = () => {
     fetchProducts();
   }, []);
 
-  const isWomenOrUnisex = (g) => {
+  const isWomenOrUnisex = (g: unknown): boolean => {
     if (!g) return false;
     if (Array.isArray(g)) return g.some(isWomenOrUnisex);
     const v = String(g).toLowerCase();

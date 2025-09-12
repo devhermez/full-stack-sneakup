@@ -1,12 +1,15 @@
-import React, { useEffect, useState, useMemo } from "react";
-import Nav from "./Nav.jsx";
-import api from "./api.js";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
-import Company from "./Company.jsx";
-import Footer from "./Footer.jsx";
+
+import Nav from "../components/Nav";
+import api from "../api";
+import Company from "../components/Company";
+import Footer from "../components/Footer";
+
+import type { Product } from "../types/Product";
 
 const Products = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const location = useLocation();
@@ -14,25 +17,25 @@ const Products = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await api.get("/api/products");
+        const res = await api.get<Product[]>("/api/products");
         setProducts(res.data);
       } catch (err) {
-        console.log("Error fetching data", err);
+        console.error("Error fetching data", err);
       }
     };
-
     fetchProducts();
   }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const q = params.get("search") || "";
-    setSearch(q);
+    setSearch(params.get("search") || "");
   }, [location.search]);
 
   // Unique category list (adds "All" at the top)
   const categories = useMemo(() => {
-    const set = new Set(products.map((p) => p.category).filter(Boolean));
+    const set = new Set<string>(
+      products.map((p) => p.category).filter((c): c is string => Boolean(c))
+    );
     return ["All", ...Array.from(set)];
   }, [products]);
 
@@ -40,8 +43,7 @@ const Products = () => {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return products.filter((p) => {
-      const matchesSearch =
-        !term || String(p.name).toLowerCase().includes(term);
+      const matchesSearch = !term || String(p.name).toLowerCase().includes(term);
       const matchesCategory = category === "All" || p.category === category;
       return matchesSearch && matchesCategory;
     });
@@ -52,6 +54,7 @@ const Products = () => {
       <Nav />
       <div className="products-content-container">
         <h1 className="gender-title">PRODUCTS</h1>
+
         {/* ===== Filter Bar ===== */}
         <div className="products-filterbar">
           <div className="filter-group">
@@ -100,37 +103,30 @@ const Products = () => {
         {/* ====================== */}
 
         <div className="products-items">
-          {filtered.map((shoe, index) => {
-            return (
-              <Link to={`/products/${shoe._id}`}>
-                <div
-                  key={shoe._id}
-                  className={`shoe-card shoe-card-${index + 1}`}
-                >
-                  <img
-                    src={shoe.images[0]}
-                    alt=""
-                    className={`shoe-img shoe-img-${index + 1}`}
-                  />
+          {filtered.map((shoe, index) => (
+            <Link key={shoe._id} to={`/products/${shoe._id}`}>
+              <div className={`shoe-card shoe-card-${index + 1}`}>
+                <img
+                  src={shoe.images?.[0]}
+                  alt={`${shoe.name} product image`}
+                  className={`shoe-img shoe-img-${index + 1}`}
+                />
 
-                  <h3 className={`shoe-name shoe-name-${index + 1}`}>
-                    {shoe.name}
-                  </h3>
-                  <p className={`shoe-gender shoe-gender-${index + 1}`}>
-                    {shoe.gender}
-                  </p>
-                  <p
-                    className={`shoe-description shoe-description-${index + 1}`}
-                  >
-                    {shoe.description}
-                  </p>
-                  <p className={`shoe-price shoe-price-${index + 1}`}>
-                    ${shoe.price}
-                  </p>
-                </div>
-              </Link>
-            );
-          })}
+                <h3 className={`shoe-name shoe-name-${index + 1}`}>
+                  {shoe.name}
+                </h3>
+                <p className={`shoe-gender shoe-gender-${index + 1}`}>
+                  {String(shoe.gender)}
+                </p>
+                <p className={`shoe-description shoe-description-${index + 1}`}>
+                  {shoe.description}
+                </p>
+                <p className={`shoe-price shoe-price-${index + 1}`}>
+                  ${Number(shoe.price ?? 0).toFixed(2)}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
       <Company />

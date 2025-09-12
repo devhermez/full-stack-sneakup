@@ -11,10 +11,8 @@ const CLIENT_URL = process.env.CLIENT_URL;
 if (!STRIPE_KEY) throw new Error("STRIPE_SECRET_KEY is not set");
 if (!CLIENT_URL) throw new Error("CLIENT_URL is not set");
 
-// No explicit apiVersion -> use library default
 const stripe = new Stripe(STRIPE_KEY);
 
-// POST /api/orders/:id/create-checkout-session
 export const createCheckoutSession: RequestHandler = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate<{ user: { email: string; _id: any } }>(
@@ -24,7 +22,6 @@ export const createCheckoutSession: RequestHandler = async (req, res) => {
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // Optional: ensure the logged-in user owns this order
     if (req.user && String(order.user._id) !== String(req.user._id)) {
       return res.status(403).json({ message: "Not authorized for this order" });
     }
@@ -81,6 +78,9 @@ export const handleStripeWebhook: RequestHandler = async (req, res) => {
       try {
         const order = await Order.findById(orderId);
         if (order) {
+          if (order.isPaid) {
+          return res.status(200).json({ received: true, note: "already paid" });
+        }
           order.isPaid = true;
           order.paidAt = new Date();
           order.paymentResult = {

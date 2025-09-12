@@ -1,22 +1,28 @@
-import React, { useState } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "./api.js";
+import api from "../api";
+
+type FormState = {
+  name: string;
+  email: string;
+  password: string;
+};
 
 const Register = () => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     name: "",
     email: "",
     password: "",
   });
-
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value } as FormState));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -25,15 +31,22 @@ const Register = () => {
       console.log("Registration Success", res.data);
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed.");
+      const message = (err as any)?.response?.data?.message || "Registration failed.";
+      setError(message);
     }
   };
 
   return (
-    <div className="register-container">  
+    <div className="register-container">
       <div className="register-card">
         <h2 className="register-title">Sign Up for Registration</h2>
-        <p>Enter your details to create a <strong>SneakUp Account</strong> using the form below.</p>
+        <p>
+          Enter your details to create a <strong>SneakUp Account</strong> using
+          the form below.
+        </p>
+
+        {error && <div className="error-message">{error}</div>}
+
         <form className="register-form" onSubmit={handleSubmit}>
           <input
             type="text"

@@ -1,27 +1,29 @@
-import React from "react";
-import { AuthContext } from "../context/AuthContext";
-import api from "../api.js";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
-import AdminNav from "./AdminNav.jsx";
-import AdminFooter from "./AdminFooter.jsx";
+
+import { AuthContext } from "../context/AuthContext";
+import api from "../api";
+import AdminNav from "./AdminNav";
+import AdminFooter from "./AdminFooter";
+
+import type { User } from "../types/User";
 
 const UsersListScreen = () => {
-  const { user } = useContext(AuthContext);
-  const [users, setUsers] = useState([]);
-  useEffect(() => {
-      document.title = "Admin | Users"
-    }, [])
+  const { user } = useContext(AuthContext) as { user: { token: string } | null };
+  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
+    document.title = "Admin | Users";
+  }, []);
+
+  useEffect(() => {
+    if (!user?.token) return;
+
     const fetchUsers = async () => {
       try {
-        const { data } = await api.get("/api/users", {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
+        const { data } = await api.get<User[]>("/api/users", {
+          headers: { Authorization: `Bearer ${user.token}` },
         });
-
         setUsers(data);
       } catch (err) {
         console.error("Error fetching users", err);
@@ -29,7 +31,8 @@ const UsersListScreen = () => {
     };
 
     fetchUsers();
-  }, [user.token]);
+  }, [user?.token]);
+
   return (
     <div className="admin-products-container">
       <AdminNav />
@@ -40,7 +43,7 @@ const UsersListScreen = () => {
           <thead>
             <tr>
               <th>Name</th>
-              <th className='user-email'>Email</th>
+              <th className="user-email">Email</th>
               <th>Role</th>
               <th>Action</th>
             </tr>
@@ -49,7 +52,7 @@ const UsersListScreen = () => {
             {users.map((u) => (
               <tr key={u._id}>
                 <td>{u.name}</td>
-                <td className='user-email'>{u.email}</td>
+                <td className="user-email">{u.email}</td>
                 <td>{u.role}</td>
                 <td>
                   <Link to={`/admin/users/${u._id}`}>
