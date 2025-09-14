@@ -48,3 +48,8 @@ front-end/.next/
 # -----------------------
 coverage/
 *.tsbuildinfo
+
+Dockerfile
+Dockerfile.*
+docker-compose.yml
+docker-compose.*.yml

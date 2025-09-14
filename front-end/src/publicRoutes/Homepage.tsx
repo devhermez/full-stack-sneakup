@@ -86,7 +86,7 @@ const Homepage = () => {
           ))}
         </div>
 
-        <button className="button-shop-now">Shop Basketball →</button>
+        <Link to={`/products?category=${encodeURIComponent("Basketball Shoes")}`} className="button-shop-now">Shop Basketball →</Link>
       </div>
 
       {/* Running */}
@@ -119,7 +119,7 @@ const Homepage = () => {
           ))}
         </div>
 
-        <button className="button-shop-now">Shop Running →</button>
+        <Link to={`/products?category=${encodeURIComponent("Running Shoes")}`} className="button-shop-now">Shop Running →</Link>
       </div>
 
       {/* Casual */}
@@ -152,7 +152,7 @@ const Homepage = () => {
           ))}
         </div>
 
-        <button className="button-shop-now">Shop Casual →</button>
+        <Link to={`/products?category=${encodeURIComponent("Casual Sneakers")}`} className="button-shop-now">Shop Casual →</Link>
       </div>
 
       <Company />

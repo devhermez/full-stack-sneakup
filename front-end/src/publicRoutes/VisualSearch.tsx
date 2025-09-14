@@ -64,6 +64,7 @@ const VisualSearch = () => {
         </p>
 
         <div className="vs-left">
+        
           <FileInput onChange={handleFileChange} />
           <button className="button-vs-search" onClick={handleSearch} disabled={loading}>
             {loading ? "Searching..." : "Search Similar Products"}

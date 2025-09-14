@@ -31,6 +31,13 @@ const Products = () => {
     setSearch(params.get("search") || "");
   }, [location.search]);
 
+  // NEW: read `category` from URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const fromUrl = params.get("category");
+    if (fromUrl) setCategory(fromUrl);
+  }, [location.search]);
+
   // Unique category list (adds "All" at the top)
   const categories = useMemo(() => {
     const set = new Set<string>(
@@ -43,7 +50,8 @@ const Products = () => {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return products.filter((p) => {
-      const matchesSearch = !term || String(p.name).toLowerCase().includes(term);
+      const matchesSearch =
+        !term || String(p.name).toLowerCase().includes(term);
       const matchesCategory = category === "All" || p.category === category;
       return matchesSearch && matchesCategory;
     });
@@ -54,6 +62,9 @@ const Products = () => {
       <Nav />
       <div className="products-content-container">
         <h1 className="gender-title">PRODUCTS</h1>
+        <p className="page-description">
+          Browse our full collection of sneakers across every style and brand.
+        </p>
 
         {/* ===== Filter Bar ===== */}
         <div className="products-filterbar">

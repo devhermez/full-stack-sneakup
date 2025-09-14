@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 // NOTE: update these import paths to match your actual TS model filenames
 import Product from "./models/Product";
 import User from "./models/User";
+import Order from "./models/Order";
 
 dotenv.config();
 
@@ -53,7 +54,61 @@ const users: UserSeed[] = [
     name: "Admin User",
     email: "admin@sneakup.com",
     password: bcrypt.hashSync("admin123", 10),
-    role: "admin",
+    role: "admin" as const,
+  },
+  {
+    name: "John Runner",
+    email: "john@example.com",
+    password: bcrypt.hashSync("password123", 10),
+    role: "user" as const,
+  },
+  {
+    name: "Jane Hooper",
+    email: "jane@example.com",
+    password: bcrypt.hashSync("password123", 10),
+    role: "user" as const,
+  },
+  {
+    name: "Mike Sneakerhead",
+    email: "mike@example.com",
+    password: bcrypt.hashSync("password123", 10),
+    role: "user" as const,
+  },
+  {
+    name: "Sarah Walker",
+    email: "sarah@example.com",
+    password: bcrypt.hashSync("password123", 10),
+    role: "user" as const,
+  },
+  {
+    name: "David Hoops",
+    email: "david@example.com",
+    password: bcrypt.hashSync("password123", 10),
+    role: "user" as const,
+  },
+  {
+    name: "Emily Strider",
+    email: "emily@example.com",
+    password: bcrypt.hashSync("password123", 10),
+    role: "user" as const,
+  },
+  {
+    name: "Chris Trainer",
+    email: "chris@example.com",
+    password: bcrypt.hashSync("password123", 10),
+    role: "user" as const,
+  },
+  {
+    name: "Laura Jogger",
+    email: "laura@example.com",
+    password: bcrypt.hashSync("password123", 10),
+    role: "user" as const,
+  },
+  {
+    name: "Alex Street",
+    email: "alex@example.com",
+    password: bcrypt.hashSync("password123", 10),
+    role: "user" as const,
   },
 ];
 
@@ -443,12 +498,18 @@ async function importData() {
   try {
     await connectDB();
 
+    
+
+
     // Clear existing
     await Product.deleteMany({});
     console.log("🧹 Existing products removed");
 
     await User.deleteMany({});
     console.log("🧹 Existing users removed");
+
+    await Order.deleteMany({});
+    console.log("🧹 Deleted existing order");
 
     // Insert fresh
     await Product.insertMany(products);

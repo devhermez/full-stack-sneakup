@@ -325,6 +325,7 @@ button {
   color: black;
   border: 1px solid black;
   background-color: white;
+  padding: 10px;
   margin-top: 20px;
   margin-bottom: 10px;
   border-radius: 0;
@@ -387,6 +388,13 @@ button {
 }
 
 /* PRODUCTS /products */
+.page-description {
+  text-align: center;
+  font-size: 0.75em;
+  color: black;
+  margin-top: 4px;
+}
+
 .products-container {
   width: 100vw;
   min-height: 100vh;
@@ -790,6 +798,7 @@ button {
 }
 .gender-title {
   font-size: 8vw;
+  margin-top: 10px;
   color: black;
 }
 .gender-items {
@@ -841,17 +850,22 @@ button {
   gap: 10px;
 }
 .file-upload {
-  border: 2px dotted white;
+  background-color: white;
+  font-weight: bold;
+  border-radius: 10px;
+  color: black;
   width: 90vw;
   height: auto;
   padding: 20px;
   display: flex;
+  gap: 6px;
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  font-size: 0.75em;
 }
 .file-symbol {
-  font-size: 24px;
+  font-size: 1em;
 }
 .visual-search-title {
   font-size: 8vw;
@@ -1120,6 +1134,10 @@ td {
 /* MEDIA QUERIES */
 /* TABLET */
 @media (min-width: 768px) and (max-width: 1024px) {
+  .file-upload {
+    font-size: 1.5em;
+    gap: 8px;
+  }
   .nav-container {
     padding-left: 20px;
     padding-right: 40px;
@@ -1191,7 +1209,6 @@ td {
     margin-top: 20px;
   }
   .file-upload {
-    border: 4px dotted white;
     width: 95vw;
     height: 200px;
   }
@@ -1493,9 +1510,9 @@ td {
 
   .checkout-container {
     width: 100vw;
-    padding: 40px;
     .checkout-content {
       flex-direction: row;
+      justify-content: center;
       .checkout-left,
       .checkout-right {
         padding: 20px;
@@ -1553,6 +1570,7 @@ td {
     height: 100px;
     margin-top: 10px;
     border: 4px dotted white;
+    font-size: 1.25em;
   }
   .button-vs-search {
     font-size: 1vw;

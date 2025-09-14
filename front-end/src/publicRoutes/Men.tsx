@@ -47,6 +47,10 @@ const Men = () => {
       <Nav />
       <div className="gender-content">
         <h1 className="gender-title">MEN'S PRODUCTS</h1>
+        <p className="page-description">
+          Discover the latest men’s sneakers—from running shoes to basketball
+          classics.
+        </p>
         <div className="gender-items">
           {menProducts.map((p, index) => (
             <Link key={p._id} to={`/products/${p._id}`}>
