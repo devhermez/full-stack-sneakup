@@ -74,10 +74,10 @@ const VisualSearch = () => {
         <div className="vs-results">
           {results.map((product) => (
             <div key={product._id} className="vs-result-card">
-              <img src={product.images?.[0]} alt={product.name} />
+              <img src={product.images?.[0]} alt={product.name} className="vs-picture" />
               <h4>{product.name}</h4>
               <p>{product.description}</p>
-              <p>${Number(product.price).toFixed(2)}</p>
+              <p><strong>${Number(product.price).toFixed(2)}</strong></p>
             </div>
           ))}
         </div>

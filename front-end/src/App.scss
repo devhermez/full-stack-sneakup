@@ -814,7 +814,7 @@ button {
 /* VISUAL SEARCH */
 .visual-search-container {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: linear-gradient(
@@ -902,6 +902,30 @@ button {
   flex-direction: row;
   justify-content: center;
   align-items: center;
+}
+
+.vs-results {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 40px;
+  padding-left: 20px;
+  padding-right: 20px;
+  .vs-result-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: auto;
+    gap: 5px;
+    text-align: center;
+    .vs-picture {
+      width: 100%;
+    }
+  }
 }
 
 /* ADMIN ROUTES */
@@ -1131,6 +1155,9 @@ td {
   }
 }
 
+
+
+
 /* MEDIA QUERIES */
 /* TABLET */
 @media (min-width: 768px) and (max-width: 1024px) {
@@ -1231,6 +1258,11 @@ td {
   .button-vs-search {
     font-size: 2vw;
     margin-top: 5px;
+  }
+
+  .vs-results {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   /* ADMIN ROUTES (Tablet) /admin/products */
@@ -1578,6 +1610,11 @@ td {
   }
   .vs-left {
     margin-left: 30px;
+  }
+
+  .vs-results {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
   }
   /* ADMIN ROUTES (Desktop) /admin/products */
   .admin-products-content {
