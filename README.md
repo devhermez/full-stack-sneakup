@@ -25,4 +25,6 @@ Deployed with AWS for backend and AI services, and Vercel for the frontend.
 **MongoDB, Express.js, React, Node.js, TypeScript, SCSS, JWT, Rate Limiting, Stripe, Helmet, Vite, Vercel, S3, Docker, 
 EC2, REST API, ECS, API Gateway, CORS, VPC, ECR, AWS SDK, FastAPI, CLIP (Transformer Model), Python**
 
+Note: This project is currently deployed on AWS with cost-saving measures applied; backend and ai-feature services may occasionally be paused.<br>
+Occasional Demo Hours: 9:00am - 5:00pm<br>
 🔗 [https://full-stack-sneakup.vercel.app]
